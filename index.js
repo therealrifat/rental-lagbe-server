@@ -45,6 +45,25 @@ app.get("/users", async (req, res) => {
   res.send(cursor);
 });
 
+app.get("/user/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = { _id: new ObjectId(id) };
+
+    const projection = {
+      name: 1,
+      email: 1,
+      role: 1,
+      _id: 0,
+    };
+
+    const result = await users.findOne(query, { projection });
+    res.send(result);
+  } catch (err) {
+    res.status(400).send({ message: "Invalid user ID" });
+  }
+});
+
 app.patch("/users/:id", async (req, res) => {
   const { id } = req.params;
   const body = req.body;
@@ -87,6 +106,17 @@ app.delete("/owner/equipment/:id", async (req, res) => {
   const result = await equipment.deleteOne(query);
   res.send(result);
   console.log(result);
+});
+
+//Details Page
+
+app.get("/equipment/:id", async (req, res) => {
+  const { id } = req.params;
+
+  const query = { _id: new ObjectId(id) };
+  console.log(query);
+  const result = await equipment.findOne(query);
+  res.send(result);
 });
 
 export default app;

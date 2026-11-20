@@ -28,6 +28,8 @@ export async function connectToMongoDB() {
 const connectedMongoDB = await connectToMongoDB();
 const database = connectedMongoDB.db("Rental-Lagbe");
 const users = database.collection("user");
+const equipment = database.collection("equipment");
+
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -59,4 +61,19 @@ app.patch("/users/:id", async(req, res) => {
   res.send(result)
   // console.log(result);
 });
+
+
+
+// owner releted apis 
+
+app.post("/owner/add-equipment", async (req, res)=>{
+  const equipmentBody = req.body
+  const result = await equipment.insertOne(equipmentBody);
+  res.send(result);
+
+})
+
+
+
+
 export default app;

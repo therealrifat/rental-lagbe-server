@@ -4,7 +4,7 @@ import "dotenv/config";
 import { MongoClient, ObjectId } from "mongodb";
 
 const app = express();
-const port =  8000;
+const port = 8000;
 
 //middleware
 
@@ -30,7 +30,6 @@ const database = connectedMongoDB.db("Rental-Lagbe");
 const users = database.collection("user");
 const equipment = database.collection("equipment");
 
-
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
@@ -46,41 +45,48 @@ app.get("/users", async (req, res) => {
   res.send(cursor);
 });
 
-app.patch("/users/:id", async(req, res) => {
+app.patch("/users/:id", async (req, res) => {
   const { id } = req.params;
-  const body = req.body
+  const body = req.body;
   const query = { _id: new ObjectId(id) };
 
   const updateDoc = {
     $set: {
-     ...body
+      ...body,
     },
   };
 
-  const result = await users.updateOne(query, updateDoc)
-  res.send(result)
+  const result = await users.updateOne(query, updateDoc);
+  res.send(result);
   // console.log(result);
 });
 
+// owner releted apis
 
-
-// owner releted apis 
-
-app.post("/owner/add-equipment", async (req, res)=>{
-  const equipmentBody = req.body
+app.post("/owner/add-equipment", async (req, res) => {
+  const equipmentBody = req.body;
   const result = await equipment.insertOne(equipmentBody);
   res.send(result);
+});
 
-})
+app.get("/owner/equipments/", async (req, res) => {
+  const result = await equipment.find().toArray();
+  res.send(result);
+});
 
+app.get("/owner/equipment/:id", async (req, res) => {
+  const { id } = req.params;
 
-app.get("/owner/equipments/", async(req, res)=>{
-  const result = await equipment.find().toArray()
-  res.send(result)
-})
+  const result = await equipment.find({ ownerId: id }).toArray();
+  res.send(result);
+});
 
-
-
-
+app.delete("/owner/equipment/:id", async (req, res) => {
+  const { id } = req.params;
+  const query = { _id: new ObjectId(id) };
+  const result = await equipment.deleteOne(query);
+  res.send(result);
+  console.log(result);
+});
 
 export default app;

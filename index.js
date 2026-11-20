@@ -4,7 +4,7 @@ import "dotenv/config";
 import { MongoClient, ObjectId } from "mongodb";
 
 const app = express();
-const port = process.env.PORT || 8000;
+const port =  8000;
 
 //middleware
 

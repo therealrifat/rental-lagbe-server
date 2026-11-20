@@ -74,6 +74,13 @@ app.post("/owner/add-equipment", async (req, res)=>{
 })
 
 
+app.get("/owner/equipments/", async(req, res)=>{
+  const result = await equipment.find().toArray()
+  res.send(result)
+})
+
+
+
 
 
 export default app;

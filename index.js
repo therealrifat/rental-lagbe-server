@@ -45,6 +45,8 @@ app.get("/users", async (req, res) => {
   res.send(cursor);
 });
 
+
+
 app.get("/user/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -53,7 +55,8 @@ app.get("/user/:id", async (req, res) => {
     const projection = {
       name: 1,
       email: 1,
-      role: 1,
+      deliveryAddress:1,
+      phone:1,
       _id: 0,
     };
 

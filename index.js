@@ -59,3 +59,4 @@ app.patch("/users/:id", async(req, res) => {
   res.send(result)
   // console.log(result);
 });
+export default app;

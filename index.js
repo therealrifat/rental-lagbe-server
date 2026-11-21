@@ -46,8 +46,6 @@ app.get("/users", async (req, res) => {
   res.send(cursor);
 });
 
-
-
 app.get("/user/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -56,8 +54,8 @@ app.get("/user/:id", async (req, res) => {
     const projection = {
       name: 1,
       email: 1,
-      deliveryAddress:1,
-      phone:1,
+      deliveryAddress: 1,
+      phone: 1,
       _id: 0,
     };
 
@@ -81,7 +79,6 @@ app.patch("/users/:id", async (req, res) => {
 
   const result = await users.updateOne(query, updateDoc);
   res.send(result);
-
 });
 
 // owner releted apis
@@ -109,7 +106,6 @@ app.delete("/owner/equipment/:id", async (req, res) => {
   const query = { _id: new ObjectId(id) };
   const result = await equipment.deleteOne(query);
   res.send(result);
-
 });
 
 //Details Page
@@ -123,29 +119,68 @@ app.get("/equipment/:id", async (req, res) => {
   res.send(result);
 });
 
+// public releted apis
 
-//booking details 
+app.get("/equipment", async (req, res) => {
+  const query = {};
+  const { search } = req.query;
 
+  if (search) {
+    query.$or = [
+      { equipmentName: { $regex: search, $options: "i" } },
+      { location: { $regex: search, $options: "i" } },
+    ];
+  }
 
-app.post("/customers/bookings",async (req, res)=>{
-  const bookingInfo = req.body
+  const { category, rentaltype, minPrice, maxPrice, sort } = req.query;
 
-  const result = await booking.insertOne(bookingInfo)
-  res.send(result)
+  if (category) {
+    query.category = category;
+  }
 
-  console.log(result)
-})
+  if (rentaltype) {
+    query.rentaltype = rentaltype;
+  }
 
-//customers releted apis 
+  if (minPrice || maxPrice) {
+    query.price = {};
 
-app.get("/customer/myrental/:id", async(req, res)=>{
-  const {id}= req.params
+    if (minPrice) query.price.$gte = Number(minPrice);
+    if (maxPrice) query.price.$lte = Number(maxPrice);
+  }
 
-  const result = await booking.find({customerId:id}).toArray()
-  res.send(result)
+  // Sorting
+  let sortOption = {};
 
+  if (sort === "low-to-high") {
+    sortOption.price = 1;
+  } else if (sort === "high-to-low") {
+    sortOption.price = -1;
+  }
 
-  
-})
+  const result = await equipment.find(query).sort(sortOption).toArray();
 
+  res.send(result);
+});
+
+//booking details
+
+app.post("/customers/bookings", async (req, res) => {
+  const bookingInfo = req.body;
+
+  const result = await booking.insertOne(bookingInfo);
+  res.send(result);
+
+  console.log(result);
+});
+
+//customers releted apis
+
+app.get("/customer/myrental/:id", async (req, res) => {
+  const { id } = req.params;
+  const result = await booking.find({ customerId: id }).toArray();
+  res.send(result);
+});
+
+app.get("customer/favories");
 export default app;

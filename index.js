@@ -182,5 +182,16 @@ app.get("/customer/myrental/:id", async (req, res) => {
   res.send(result);
 });
 
-app.get("customer/favories");
+
+
+app.get("/booking/:id", async(req, res)=>{
+  const {id} = req.params
+  const query = { _id: new ObjectId(id) };
+  const result= await booking.findOne(query)
+  res.send(result)
+
+})
+
+
+// app.get("customer/favories");
 export default app;

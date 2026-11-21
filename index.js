@@ -29,6 +29,7 @@ const connectedMongoDB = await connectToMongoDB();
 const database = connectedMongoDB.db("Rental-Lagbe");
 const users = database.collection("user");
 const equipment = database.collection("equipment");
+const booking = database.collection("bookings");
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -80,7 +81,7 @@ app.patch("/users/:id", async (req, res) => {
 
   const result = await users.updateOne(query, updateDoc);
   res.send(result);
-  // console.log(result);
+
 });
 
 // owner releted apis
@@ -108,7 +109,7 @@ app.delete("/owner/equipment/:id", async (req, res) => {
   const query = { _id: new ObjectId(id) };
   const result = await equipment.deleteOne(query);
   res.send(result);
-  console.log(result);
+
 });
 
 //Details Page
@@ -117,9 +118,34 @@ app.get("/equipment/:id", async (req, res) => {
   const { id } = req.params;
 
   const query = { _id: new ObjectId(id) };
-  console.log(query);
+
   const result = await equipment.findOne(query);
   res.send(result);
 });
+
+
+//booking details 
+
+
+app.post("/customers/bookings",async (req, res)=>{
+  const bookingInfo = req.body
+
+  const result = await booking.insertOne(bookingInfo)
+  res.send(result)
+
+  console.log(result)
+})
+
+//customers releted apis 
+
+app.get("/customer/myrental/:id", async(req, res)=>{
+  const {id}= req.params
+
+  const result = await booking.find({customerId:id}).toArray()
+  res.send(result)
+
+
+  
+})
 
 export default app;

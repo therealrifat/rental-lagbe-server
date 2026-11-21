@@ -2,6 +2,9 @@ import express from "express";
 import cors from "cors";
 import "dotenv/config";
 import { MongoClient, ObjectId } from "mongodb";
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 const port = 8000;
@@ -30,6 +33,7 @@ const database = connectedMongoDB.db("Rental-Lagbe");
 const users = database.collection("user");
 const equipment = database.collection("equipment");
 const booking = database.collection("bookings");
+const payment = database.collection("payments");
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -182,16 +186,50 @@ app.get("/customer/myrental/:id", async (req, res) => {
   res.send(result);
 });
 
-
-
-app.get("/booking/:id", async(req, res)=>{
-  const {id} = req.params
+app.get("/booking/:id", async (req, res) => {
+  const { id } = req.params;
   const query = { _id: new ObjectId(id) };
-  const result= await booking.findOne(query)
-  res.send(result)
+  const result = await booking.findOne(query);
+  res.send(result);
+});
 
-})
+//payment verification
 
+app.post("/payment/checkout-verify", async (req, res) => {
+  const { sessionId } = req.body;
+
+  const { status, payment_status, customer_email, metadata, payment_intent } =
+    await stripe.checkout.sessions.retrieve(sessionId);
+
+  if (status === "complete" && payment_status == "paid") {
+    const payments = {
+      sessionId,
+      status,
+      customer_email,
+      bookingId: metadata.bookingId,
+      payment_intent,
+      payment_status,
+      payment_date: new Date(),
+    };
+
+    const result = await payment.insertOne(payments);
+    // update the booking table
+    const query = { _id: new ObjectId(metadata.bookingId) };
+    const updateDoc = {
+      $set: {
+        paymentStatus: true,
+      },
+    };
+
+    const updateResult = await booking.updateOne(query, updateDoc);
+
+    res.send({ success: true, result, updateResult });
+
+    return;
+  }
+
+  res.send({ success: false, message: "Verification Failed" });
+});
 
 // app.get("customer/favories");
 export default app;

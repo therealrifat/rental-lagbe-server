@@ -181,12 +181,55 @@ const statusData = req.body
 
 
 
+
+
 const result = await equipment.updateOne(query, updateDoc);
 
   res.send(result);
 })
 
 
+
+app.get('/admin/booking/', async (req, res) => {
+  const result = await booking.aggregate([
+    {
+      $addFields: {
+        ownerObjectId: {
+          $toObjectId: "$ownerId"
+        }
+      }
+    },
+    {
+      $lookup: {
+        from: "user",
+        localField: "ownerObjectId",
+        foreignField: "_id",
+        as: "ownerInfo"
+      }
+    },
+    {
+      $unwind: {
+        path: "$ownerInfo",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $addFields: {
+        ownerName: "$ownerInfo.name",
+        ownerEmail: "$ownerInfo.email",
+        ownerPhone: "$ownerInfo.phone"
+      }
+    },
+    {
+      $project: {
+        ownerInfo: 0,
+        ownerObjectId: 0
+      }
+    }
+  ]).toArray();
+
+  res.send(result);
+});
 
 
 //Details Page

@@ -112,6 +112,18 @@ app.delete("/owner/equipment/:id", async (req, res) => {
   res.send(result);
 });
 
+
+
+app.get("/owner/bookings/:id", async(req, res)=>{
+  const {id}= req.params
+  const query = {ownerId: id}
+  const result = await booking.find(query).toArray()
+  res.send(result)
+})
+
+
+
+
 //Details Page
 
 app.get("/equipment/:id", async (req, res) => {
@@ -198,10 +210,25 @@ app.get("/booking/:id", async (req, res) => {
 app.post("/payment/checkout-verify", async (req, res) => {
   const { sessionId } = req.body;
 
+  if(!sessionId){
+    res.send({success: false,
+      message: "Session Id is Required"
+    })
+ }
+
   const { status, payment_status, customer_email, metadata, payment_intent } =
     await stripe.checkout.sessions.retrieve(sessionId);
 
   if (status === "complete" && payment_status == "paid") {
+
+
+    const sessionQuery ={sessionId}
+    const existingPayment = await payment.findOne(sessionQuery)
+
+    if(existingPayment){
+      return res.send({success: false, message: "Payment Already Verified"})
+    }
+
     const payments = {
       sessionId,
       status,
@@ -230,6 +257,9 @@ app.post("/payment/checkout-verify", async (req, res) => {
 
   res.send({ success: false, message: "Verification Failed" });
 });
+
+
+
 
 // app.get("customer/favories");
 export default app;

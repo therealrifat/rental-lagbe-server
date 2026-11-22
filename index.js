@@ -14,6 +14,7 @@ const port = 8000;
 app.use(express.json());
 app.use(cors());
 
+
 const client = new MongoClient(
   `mongodb://${process.env.MONGO_DB_USER}:${process.env.MONGO_DB_PASSWORD}@ac-fpjasq8-shard-00-00.l5erhpx.mongodb.net:27017,ac-fpjasq8-shard-00-01.l5erhpx.mongodb.net:27017,ac-fpjasq8-shard-00-02.l5erhpx.mongodb.net:27017/?ssl=true&replicaSet=atlas-h67n0w-shard-0&authSource=admin`,
 );
@@ -112,18 +113,14 @@ app.delete("/owner/equipment/:id", async (req, res) => {
   res.send(result);
 });
 
+app.get("/owner/bookings/:id", async (req, res) => {
+  const { id } = req.params;
+  const query = { ownerId: id };
+  const result = await booking.find(query).toArray();
+  res.send(result);
+});
 
-
-app.get("/owner/bookings/:id", async(req, res)=>{
-  const {id}= req.params
-  const query = {ownerId: id}
-  const result = await booking.find(query).toArray()
-  res.send(result)
-})
-
-
-
-//admin releted apis  
+//admin releted apis
 
 app.get("/users", async (req, res) => {
   const cursor = await users.find().toArray();
@@ -133,7 +130,20 @@ app.get("/users", async (req, res) => {
 
 
 
+app.patch("/users/role/:id", async (req, res) => {
+  const { id } = req.params;
+  const query = { _id: new ObjectId(id) };
+  const roleInfo = req.body
 
+  const updateDoc = {
+    $set: {
+      role: roleInfo.role,
+    },
+  };
+  const result = await users.updateOne(query, updateDoc);
+  res.send(result)
+  
+});
 
 
 
@@ -193,8 +203,6 @@ app.get("/equipment", async (req, res) => {
   res.send(result);
 });
 
-
-
 //booking details
 
 app.post("/customers/bookings", async (req, res) => {
@@ -226,23 +234,19 @@ app.get("/booking/:id", async (req, res) => {
 app.post("/payment/checkout-verify", async (req, res) => {
   const { sessionId } = req.body;
 
-  if(!sessionId){
-    res.send({success: false,
-      message: "Session Id is Required"
-    })
- }
+  if (!sessionId) {
+    res.send({ success: false, message: "Session Id is Required" });
+  }
 
   const { status, payment_status, customer_email, metadata, payment_intent } =
     await stripe.checkout.sessions.retrieve(sessionId);
 
   if (status === "complete" && payment_status == "paid") {
+    const sessionQuery = { sessionId };
+    const existingPayment = await payment.findOne(sessionQuery);
 
-
-    const sessionQuery ={sessionId}
-    const existingPayment = await payment.findOne(sessionQuery)
-
-    if(existingPayment){
-      return res.send({success: false, message: "Payment Already Verified"})
+    if (existingPayment) {
+      return res.send({ success: false, message: "Payment Already Verified" });
     }
 
     const payments = {
@@ -273,9 +277,6 @@ app.post("/payment/checkout-verify", async (req, res) => {
 
   res.send({ success: false, message: "Verification Failed" });
 });
-
-
-
 
 // app.get("customer/favories");
 export default app;

@@ -123,6 +123,20 @@ app.get("/owner/bookings/:id", async(req, res)=>{
 
 
 
+//admin releted apis  
+
+app.get("/users", async (req, res) => {
+  const cursor = await users.find().toArray();
+  res.send(cursor);
+});
+
+
+
+
+
+
+
+
 
 //Details Page
 
@@ -178,6 +192,8 @@ app.get("/equipment", async (req, res) => {
 
   res.send(result);
 });
+
+
 
 //booking details
 

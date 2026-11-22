@@ -168,7 +168,23 @@ app.delete('/admin/equipment/:id', async (req, res)=>{
   res.send(result);
 })
 
+app.patch('/admin/equipment/:id', async (req, res)=>{
+  const { id } = req.params;
+const statusData = req.body
+  const query = { _id: new ObjectId(id) };
 
+ const updateDoc = {
+    $set: {
+      status: statusData.status
+    },
+  };
+
+
+
+const result = await equipment.updateOne(query, updateDoc);
+
+  res.send(result);
+})
 
 
 

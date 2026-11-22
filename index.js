@@ -14,7 +14,6 @@ const port = 8000;
 app.use(express.json());
 app.use(cors());
 
-
 const client = new MongoClient(
   `mongodb://${process.env.MONGO_DB_USER}:${process.env.MONGO_DB_PASSWORD}@ac-fpjasq8-shard-00-00.l5erhpx.mongodb.net:27017,ac-fpjasq8-shard-00-01.l5erhpx.mongodb.net:27017,ac-fpjasq8-shard-00-02.l5erhpx.mongodb.net:27017/?ssl=true&replicaSet=atlas-h67n0w-shard-0&authSource=admin`,
 );
@@ -120,15 +119,6 @@ app.get("/owner/bookings/:id", async (req, res) => {
   res.send(result);
 });
 
-
-
-
-
-
-
-
-
-
 //admin releted apis
 // ----------------------------------------------=======
 app.get("/users", async (req, res) => {
@@ -136,13 +126,10 @@ app.get("/users", async (req, res) => {
   res.send(cursor);
 });
 
-
-
-
 app.patch("/users/role/:id", async (req, res) => {
   const { id } = req.params;
   const query = { _id: new ObjectId(id) };
-  const roleInfo = req.body
+  const roleInfo = req.body;
 
   const updateDoc = {
     $set: {
@@ -150,87 +137,95 @@ app.patch("/users/role/:id", async (req, res) => {
     },
   };
   const result = await users.updateOne(query, updateDoc);
-  res.send(result)
-  
+  res.send(result);
 });
 
+app.get("/admin/equipment", async (req, res) => {
+  const result = await equipment.find().toArray();
+  res.send(result);
+});
 
-app.get('/admin/equipment',async(req, res)=>{
-  const result =await equipment.find().toArray()
-  res.send(result)
-})
-
-app.delete('/admin/equipment/:id', async (req, res)=>{
-
+app.delete("/admin/equipment/:id", async (req, res) => {
   const { id } = req.params;
   const query = { _id: new ObjectId(id) };
   const result = await equipment.deleteOne(query);
   res.send(result);
-})
+});
 
-app.patch('/admin/equipment/:id', async (req, res)=>{
+app.patch("/admin/equipment/:id", async (req, res) => {
   const { id } = req.params;
-const statusData = req.body
+  const statusData = req.body;
   const query = { _id: new ObjectId(id) };
 
- const updateDoc = {
+  const updateDoc = {
     $set: {
-      status: statusData.status
+      status: statusData.status,
     },
   };
 
-
-
-
-
-const result = await equipment.updateOne(query, updateDoc);
-
-  res.send(result);
-})
-
-
-
-app.get('/admin/booking/', async (req, res) => {
-  const result = await booking.aggregate([
-    {
-      $addFields: {
-        ownerObjectId: {
-          $toObjectId: "$ownerId"
-        }
-      }
-    },
-    {
-      $lookup: {
-        from: "user",
-        localField: "ownerObjectId",
-        foreignField: "_id",
-        as: "ownerInfo"
-      }
-    },
-    {
-      $unwind: {
-        path: "$ownerInfo",
-        preserveNullAndEmptyArrays: true
-      }
-    },
-    {
-      $addFields: {
-        ownerName: "$ownerInfo.name",
-        ownerEmail: "$ownerInfo.email",
-        ownerPhone: "$ownerInfo.phone"
-      }
-    },
-    {
-      $project: {
-        ownerInfo: 0,
-        ownerObjectId: 0
-      }
-    }
-  ]).toArray();
+  const result = await equipment.updateOne(query, updateDoc);
 
   res.send(result);
 });
 
+app.get("/admin/booking/", async (req, res) => {
+  const result = await booking
+    .aggregate([
+      {
+        $addFields: {
+          ownerObjectId: {
+            $toObjectId: "$ownerId",
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "user",
+          localField: "ownerObjectId",
+          foreignField: "_id",
+          as: "ownerInfo",
+        },
+      },
+      {
+        $unwind: {
+          path: "$ownerInfo",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $addFields: {
+          ownerName: "$ownerInfo.name",
+          ownerEmail: "$ownerInfo.email",
+          ownerPhone: "$ownerInfo.phone",
+        },
+      },
+      {
+        $project: {
+          ownerInfo: 0,
+          ownerObjectId: 0,
+        },
+      },
+    ])
+    .toArray();
+
+  res.send(result);
+});
+
+app.patch("/admin/booking/:id", async (req, res) => {
+  const { id } = req.params;
+  const statusData = req.body;
+  const query = { _id: new ObjectId(id) };
+
+  const updateDoc = {
+    $set: {
+      bookingStatus: statusData.status,
+    },
+  };
+
+  const result = await booking.updateOne(query, updateDoc);
+
+  res.send(result);
+});
 
 //Details Page
 // -------------------------------------------------------------

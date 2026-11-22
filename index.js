@@ -120,8 +120,17 @@ app.get("/owner/bookings/:id", async (req, res) => {
   res.send(result);
 });
 
-//admin releted apis
 
+
+
+
+
+
+
+
+
+//admin releted apis
+// ----------------------------------------------=======
 app.get("/users", async (req, res) => {
   const cursor = await users.find().toArray();
   res.send(cursor);
@@ -146,10 +155,26 @@ app.patch("/users/role/:id", async (req, res) => {
 });
 
 
+app.get('/admin/equipment',async(req, res)=>{
+  const result =await equipment.find().toArray()
+  res.send(result)
+})
+
+app.delete('/admin/equipment/:id', async (req, res)=>{
+
+  const { id } = req.params;
+  const query = { _id: new ObjectId(id) };
+  const result = await equipment.deleteOne(query);
+  res.send(result);
+})
+
+
+
+
 
 
 //Details Page
-
+// -------------------------------------------------------------
 app.get("/equipment/:id", async (req, res) => {
   const { id } = req.params;
 

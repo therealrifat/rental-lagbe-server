@@ -308,6 +308,9 @@ app.get("/booking/:id", async (req, res) => {
   res.send(result);
 });
 
+
+app.get('/curtomer/rent')
+
 //payment verification
 
 app.post("/payment/checkout-verify", async (req, res) => {
@@ -357,5 +360,15 @@ app.post("/payment/checkout-verify", async (req, res) => {
   res.send({ success: false, message: "Verification Failed" });
 });
 
+
+
+app.get("/featured-equipment", async (req, res) => {
+  const result = await equipment.find({status:"Approved"}).limit(6).toArray();
+
+  res.send(result);
+});
+
 // app.get("customer/favories");
 export default app;
+
+

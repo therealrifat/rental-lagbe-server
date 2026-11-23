@@ -328,15 +328,51 @@ app.post("/customers/favorites", async (req, res) => {
 });
 
 
-app.get('/customers/favorites/:id', async(req, res)=>{
-  const {id}=req.params
-  console.log(id)
+app.get('/customers/favorites/:id', async (req, res) => {
+  const { id } = req.params;
 
-  const favorites = await favorits.find({customerId:id}).toArray()
-  console.log(favorites.equipmentId)
+ const favorites = await favorits.aggregate([
+  {
+    $match: { customerId: id }
+  },
+  {
+    $addFields: {
+      equipmentObjectId: {
+        $toObjectId: "$equipmentId"
+      }
+    }
+  },
+  {
+    $lookup: {
+      from: "equipment",
+      localField: "equipmentObjectId",
+      foreignField: "_id",
+      as: "equipment"
+    }
+  },
+  {
+    $unwind: "$equipment"
+  },
+  {
+    $project: {
+      _id: 1,                       // Favorite ID
+      equipmentId: 1,               // Equipment ID
+      createdAt: 1,
+      equipmentName: "$equipment.equipmentName",
+      category: "$equipment.category",
+      location: "$equipment.location",
+      rentalPrice: "$equipment.rentalPrice",
+      price: "$equipment.price",
+      image: "$equipment.image"
 
-})
 
+    }
+  }
+]).toArray();
+
+  res.send(favorites);
+
+});
 //payment verification
 
 app.post("/payment/checkout-verify", async (req, res) => {

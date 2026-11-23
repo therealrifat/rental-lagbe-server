@@ -34,6 +34,7 @@ const users = database.collection("user");
 const equipment = database.collection("equipment");
 const booking = database.collection("bookings");
 const payment = database.collection("payments");
+const favorits = database.collection("favorits");
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -308,8 +309,33 @@ app.get("/booking/:id", async (req, res) => {
   res.send(result);
 });
 
+//favorites apis
+app.post("/customers/favorites", async (req, res) => {
+  const favoriteBody = req.body;
 
-app.get('/curtomer/rent')
+  const existingFavorite = await favorits.findOne(favoriteBody);
+
+
+  if (existingFavorite) {
+    return res.send({ message: "Already added to favorites" });
+  }
+
+  const result = await favorits.insertOne({
+    ...favoriteBody,
+    createdAt: new Date(),
+  });
+  res.send({ message: "Added to favorites" });
+});
+
+
+app.get('/customers/favorites/:id', async(req, res)=>{
+  const {id}=req.params
+  console.log(id)
+
+  const favorites = await favorits.find({customerId:id}).toArray()
+  console.log(favorites.equipmentId)
+
+})
 
 //payment verification
 
@@ -360,15 +386,16 @@ app.post("/payment/checkout-verify", async (req, res) => {
   res.send({ success: false, message: "Verification Failed" });
 });
 
-
+// Feature section apis
 
 app.get("/featured-equipment", async (req, res) => {
-  const result = await equipment.find({status:"Approved"}).limit(6).toArray();
+  const result = await equipment
+    .find({ status: "Approved" })
+    .limit(6)
+    .toArray();
 
   res.send(result);
 });
 
 // app.get("customer/favories");
 export default app;
-
-

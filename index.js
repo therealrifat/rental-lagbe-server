@@ -315,7 +315,6 @@ app.post("/customers/favorites", async (req, res) => {
 
   const existingFavorite = await favorits.findOne(favoriteBody);
 
-
   if (existingFavorite) {
     return res.send({ message: "Already added to favorites" });
   }
@@ -327,52 +326,59 @@ app.post("/customers/favorites", async (req, res) => {
   res.send({ message: "Added to favorites" });
 });
 
-
-app.get('/customers/favorites/:id', async (req, res) => {
+app.get("/customers/favorites/:id", async (req, res) => {
   const { id } = req.params;
 
- const favorites = await favorits.aggregate([
-  {
-    $match: { customerId: id }
-  },
-  {
-    $addFields: {
-      equipmentObjectId: {
-        $toObjectId: "$equipmentId"
-      }
-    }
-  },
-  {
-    $lookup: {
-      from: "equipment",
-      localField: "equipmentObjectId",
-      foreignField: "_id",
-      as: "equipment"
-    }
-  },
-  {
-    $unwind: "$equipment"
-  },
-  {
-    $project: {
-      _id: 1,                       // Favorite ID
-      equipmentId: 1,               // Equipment ID
-      createdAt: 1,
-      equipmentName: "$equipment.equipmentName",
-      category: "$equipment.category",
-      location: "$equipment.location",
-      rentalPrice: "$equipment.rentalPrice",
-      price: "$equipment.price",
-      image: "$equipment.image"
-
-
-    }
-  }
-]).toArray();
+  const favorites = await favorits
+    .aggregate([
+      {
+        $match: { customerId: id },
+      },
+      {
+        $addFields: {
+          equipmentObjectId: {
+            $toObjectId: "$equipmentId",
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "equipment",
+          localField: "equipmentObjectId",
+          foreignField: "_id",
+          as: "equipment",
+        },
+      },
+      {
+        $unwind: "$equipment",
+      },
+      {
+        $project: {
+          _id: 1, // Favorite ID
+          equipmentId: 1, // Equipment ID
+          createdAt: 1,
+          equipmentName: "$equipment.equipmentName",
+          category: "$equipment.category",
+          location: "$equipment.location",
+          rentalPrice: "$equipment.rentalPrice",
+          price: "$equipment.price",
+          image: "$equipment.image",
+        },
+      },
+    ])
+    .toArray();
 
   res.send(favorites);
-
 });
+
+app.delete("/customers/favorites", async (req, res) => {
+  const { _id: equipmentId, customerId } = req.body;
+  const query = { _id: new ObjectId(equipmentId) };
+
+  const result = await favorits.deleteOne();
+  res.send(result);
+});
+
 //payment verification
 
 app.post("/payment/checkout-verify", async (req, res) => {

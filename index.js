@@ -31,6 +31,7 @@ export async function connectToMongoDB() {
 const connectedMongoDB = await connectToMongoDB();
 const database = connectedMongoDB.db("Rental-Lagbe");
 const users = database.collection("user");
+const sessions = database.collection("session");
 const equipment = database.collection("equipment");
 const booking = database.collection("bookings");
 const payment = database.collection("payments");
@@ -39,6 +40,72 @@ const favorits = database.collection("favorits");
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
+
+const verifyToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    res.send({ status: 401, message: "Unathorizations" });
+    return;
+  }
+
+  const token = authHeader.split(" ")[1];
+  if (!token) {
+    res.send({ status: 401, message: "Unathorizations" });
+    return;
+  }
+
+  const query = { token };
+  const session = await sessions.findOne(query);
+  if (!session) {
+    res.send({ status: 401, message: "Unathorizations" });
+    return;
+  }
+
+  const userId = session.userId;
+
+  const userQuery = { _id: new ObjectId(userId) };
+  const user = await users.findOne(userQuery);
+  if (!user) {
+    res.send({ status: 401, message: "Unathorizations" });
+    return;
+  }
+
+  req.user = user;
+
+
+  next();
+};
+
+// must
+
+const verifyOwner = async (req, res, next)=>{
+  if(req.user.role !== "owner"){
+    res.send({message: "Forbidden"})
+    return
+  }
+  next()
+
+}
+const verifyAdmin = async (req, res, next)=>{
+  if(req.user.role !== "Admin"){
+    res.send({message: "Forbidden"})
+    return
+  }
+  next()
+
+}
+const verifyRenter = async (req, res, next)=>{
+  if(req.user.role !== "customer"){
+    res.send({message: "Forbidden"})
+    return
+  }
+  next()
+
+}
+
+
+
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
@@ -99,14 +166,22 @@ app.get("/owner/equipments/", async (req, res) => {
   res.send(result);
 });
 
-app.get("/owner/equipment/:id", async (req, res) => {
+app.get("/owner/equipment/:id", verifyToken,verifyOwner, async (req, res) => {
   const { id } = req.params;
+  console.log(id);
+
+
+  
+  if (id !== req.user._id.toString() && req.user.role !== "admin") {
+    return res.send({ status: 403, message: "Forbidden" });
+  }
 
   const result = await equipment.find({ ownerId: id }).toArray();
   res.send(result);
 });
 
-app.delete("/owner/equipment/:id", async (req, res) => {
+
+app.delete("/owner/equipment/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
   const query = { _id: new ObjectId(id) };
   const result = await equipment.deleteOne(query);

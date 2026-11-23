@@ -113,7 +113,7 @@ app.listen(port, () => {
 
 //user releted api
 
-app.get("/users", async (req, res) => {
+app.get("/users", verifyToken, async (req, res) => {
   const cursor = await users.find().toArray();
   res.send(cursor);
 });
@@ -138,7 +138,7 @@ app.get("/user/:id", async (req, res) => {
   }
 });
 
-app.patch("/users/:id", async (req, res) => {
+app.patch("/users/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
   const body = req.body;
   const query = { _id: new ObjectId(id) };
@@ -155,7 +155,7 @@ app.patch("/users/:id", async (req, res) => {
 
 // owner releted apis
 
-app.post("/owner/add-equipment", async (req, res) => {
+app.post("/owner/add-equipment", verifyToken, verifyOwner, async (req, res) => {
   const equipmentBody = req.body;
   const result = await equipment.insertOne(equipmentBody);
   res.send(result);
@@ -168,7 +168,6 @@ app.get("/owner/equipments/", async (req, res) => {
 
 app.get("/owner/equipment/:id", verifyToken,verifyOwner, async (req, res) => {
   const { id } = req.params;
-  console.log(id);
 
 
   
@@ -181,14 +180,14 @@ app.get("/owner/equipment/:id", verifyToken,verifyOwner, async (req, res) => {
 });
 
 
-app.delete("/owner/equipment/:id", verifyToken, async (req, res) => {
+app.delete("/owner/equipment/:id", verifyToken, verifyOwner, async (req, res) => {
   const { id } = req.params;
   const query = { _id: new ObjectId(id) };
   const result = await equipment.deleteOne(query);
   res.send(result);
 });
 
-app.get("/owner/bookings/:id", async (req, res) => {
+app.get("/owner/bookings/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
   const query = { ownerId: id };
   const result = await booking.find(query).toArray();
@@ -197,10 +196,11 @@ app.get("/owner/bookings/:id", async (req, res) => {
 
 //admin releted apis
 // ----------------------------------------------=======
-app.get("/users", async (req, res) => {
+app.get("/users", verifyToken, async (req, res) => {
   const cursor = await users.find().toArray();
   res.send(cursor);
 });
+
 
 app.patch("/users/role/:id", async (req, res) => {
   const { id } = req.params;
@@ -385,7 +385,7 @@ app.get("/booking/:id", async (req, res) => {
 });
 
 //favorites apis
-app.post("/customers/favorites", async (req, res) => {
+app.post("/customers/favorites", verifyToken,verifyRenter,  async (req, res) => {
   const favoriteBody = req.body;
 
   const existingFavorite = await favorits.findOne(favoriteBody);
@@ -401,7 +401,7 @@ app.post("/customers/favorites", async (req, res) => {
   res.send({ message: "Added to favorites" });
 });
 
-app.get("/customers/favorites/:id", async (req, res) => {
+app.get("/customers/favorites/:id", verifyToken, verifyRenter, async (req, res) => {
   const { id } = req.params;
 
   const favorites = await favorits
@@ -446,7 +446,7 @@ app.get("/customers/favorites/:id", async (req, res) => {
   res.send(favorites);
 });
 
-app.delete("/customers/favorites", async (req, res) => {
+app.delete("/customers/favorites", verifyToken,verifyRenter,  async (req, res) => {
   const { _id: equipmentId, customerId } = req.body;
   const query = { _id: new ObjectId(equipmentId) };
 

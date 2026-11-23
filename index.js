@@ -73,39 +73,32 @@ const verifyToken = async (req, res, next) => {
 
   req.user = user;
 
-
   next();
 };
 
 // must
 
-const verifyOwner = async (req, res, next)=>{
-  if(req.user.role !== "owner"){
-    res.send({message: "Forbidden"})
-    return
+const verifyOwner = async (req, res, next) => {
+  if (req.user.role !== "owner") {
+    res.send({ message: "Forbidden" });
+    return;
   }
-  next()
-
-}
-const verifyAdmin = async (req, res, next)=>{
-  if(req.user.role !== "Admin"){
-    res.send({message: "Forbidden"})
-    return
+  next();
+};
+const verifyAdmin = async (req, res, next) => {
+  if (req.user.role !== "Admin") {
+    res.send({ message: "Forbidden" });
+    return;
   }
-  next()
-
-}
-const verifyRenter = async (req, res, next)=>{
-  if(req.user.role !== "customer"){
-    res.send({message: "Forbidden"})
-    return
+  next();
+};
+const verifyRenter = async (req, res, next) => {
+  if (req.user.role !== "customer") {
+    res.send({ message: "Forbidden" });
+    return;
   }
-  next()
-
-}
-
-
-
+  next();
+};
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
@@ -166,11 +159,9 @@ app.get("/owner/equipments/", async (req, res) => {
   res.send(result);
 });
 
-app.get("/owner/equipment/:id", verifyToken,verifyOwner, async (req, res) => {
+app.get("/owner/equipment/:id", verifyToken, verifyOwner, async (req, res) => {
   const { id } = req.params;
 
-
-  
   if (id !== req.user._id.toString() && req.user.role !== "admin") {
     return res.send({ status: 403, message: "Forbidden" });
   }
@@ -179,13 +170,17 @@ app.get("/owner/equipment/:id", verifyToken,verifyOwner, async (req, res) => {
   res.send(result);
 });
 
-
-app.delete("/owner/equipment/:id", verifyToken, verifyOwner, async (req, res) => {
-  const { id } = req.params;
-  const query = { _id: new ObjectId(id) };
-  const result = await equipment.deleteOne(query);
-  res.send(result);
-});
+app.delete(
+  "/owner/equipment/:id",
+  verifyToken,
+  verifyOwner,
+  async (req, res) => {
+    const { id } = req.params;
+    const query = { _id: new ObjectId(id) };
+    const result = await equipment.deleteOne(query);
+    res.send(result);
+  },
+);
 
 app.get("/owner/bookings/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
@@ -200,7 +195,6 @@ app.get("/users", verifyToken, async (req, res) => {
   const cursor = await users.find().toArray();
   res.send(cursor);
 });
-
 
 app.patch("/users/role/:id", async (req, res) => {
   const { id } = req.params;
@@ -385,74 +379,89 @@ app.get("/booking/:id", async (req, res) => {
 });
 
 //favorites apis
-app.post("/customers/favorites", verifyToken,verifyRenter,  async (req, res) => {
-  const favoriteBody = req.body;
+app.post(
+  "/customers/favorites",
+  verifyToken,
+  verifyRenter,
+  async (req, res) => {
+    const favoriteBody = req.body;
 
-  const existingFavorite = await favorits.findOne(favoriteBody);
+    const existingFavorite = await favorits.findOne(favoriteBody);
 
-  if (existingFavorite) {
-    return res.send({ message: "Already added to favorites" });
-  }
+    if (existingFavorite) {
+      return res.send({ message: "Already added to favorites" });
+    }
 
-  const result = await favorits.insertOne({
-    ...favoriteBody,
-    createdAt: new Date(),
-  });
-  res.send({ message: "Added to favorites" });
-});
+    const result = await favorits.insertOne({
+      ...favoriteBody,
+      createdAt: new Date(),
+    });
+    res.send({ message: "Added to favorites" });
+  },
+);
 
-app.get("/customers/favorites/:id", verifyToken, verifyRenter, async (req, res) => {
-  const { id } = req.params;
+app.get(
+  "/customers/favorites/:id",
+  verifyToken,
+  verifyRenter,
+  async (req, res) => {
+    const { id } = req.params;
 
-  const favorites = await favorits
-    .aggregate([
-      {
-        $match: { customerId: id },
-      },
-      {
-        $addFields: {
-          equipmentObjectId: {
-            $toObjectId: "$equipmentId",
+    const favorites = await favorits
+      .aggregate([
+        {
+          $match: { customerId: id },
+        },
+        {
+          $addFields: {
+            equipmentObjectId: {
+              $toObjectId: "$equipmentId",
+            },
           },
         },
-      },
-      {
-        $lookup: {
-          from: "equipment",
-          localField: "equipmentObjectId",
-          foreignField: "_id",
-          as: "equipment",
+        {
+          $lookup: {
+            from: "equipment",
+            localField: "equipmentObjectId",
+            foreignField: "_id",
+            as: "equipment",
+          },
         },
-      },
-      {
-        $unwind: "$equipment",
-      },
-      {
-        $project: {
-          _id: 1, // Favorite ID
-          equipmentId: 1, // Equipment ID
-          createdAt: 1,
-          equipmentName: "$equipment.equipmentName",
-          category: "$equipment.category",
-          location: "$equipment.location",
-          rentalPrice: "$equipment.rentalPrice",
-          price: "$equipment.price",
-          image: "$equipment.image",
+        {
+          $unwind: "$equipment",
         },
-      },
-    ])
-    .toArray();
+        {
+          $project: {
+            _id: 1, // Favorite ID
+            equipmentId: 1, // Equipment ID
+            createdAt: 1,
+            equipmentName: "$equipment.equipmentName",
+            category: "$equipment.category",
+            location: "$equipment.location",
+            rentalPrice: "$equipment.rentalPrice",
+            price: "$equipment.price",
+            image: "$equipment.image",
+          },
+        },
+      ])
+      .toArray();
 
-  res.send(favorites);
-});
+    res.send(favorites);
+  },
+);
 
-app.delete("/customers/favorites", verifyToken,verifyRenter,  async (req, res) => {
-  const { _id: equipmentId, customerId } = req.body;
-  const query = { _id: new ObjectId(equipmentId) };
+app.delete(
+  "/customers/favorites",
+  verifyToken,
+  verifyRenter,
+  async (req, res) => {
+    const { _id: equipmentId, customerId } = req.body;
+    const query = { _id: new ObjectId(equipmentId) };
 
-  const result = await favorits.deleteOne();
-  res.send(result);
-});
+    const result = await favorits.deleteOne();
+    res.send(result);
+  },
+);
 
 //payment verification
 
@@ -514,5 +523,65 @@ app.get("/featured-equipment", async (req, res) => {
   res.send(result);
 });
 
-// app.get("customer/favories");
+// owner analytis
+
+app.get("/owner/analytics/:id", (req, res) => {
+  const { id } = req.params;
+  const data = {
+    totalEquipment: 9,
+    totalBookings: 42,
+    pendingBookings: 5,
+    completedRentals: 31,
+    totalRevenue: 785000,
+    monthlyBookings: [
+      { month: "Dec", bookings: 2 },
+      { month: "Jan", bookings: 3 },
+      { month: "Feb", bookings: 4 },
+      { month: "Mar", bookings: 2 },
+      { month: "Apr", bookings: 5 },
+      { month: "May", bookings: 6 },
+      { month: "Jun", bookings: 4 },
+      { month: "Jul", bookings: 3 },
+      { month: "Aug", bookings: 5 },
+      { month: "Sep", bookings: 2 },
+      { month: "Oct", bookings: 4 },
+      { month: "Nov", bookings: 2 },
+    ],
+  };
+
+  res.send(data);
+});
+
+app.get("/admin/analytics/:id", (req, res) => {
+
+  const {id}=req.params
+  console.log(id)
+
+  const data = {
+    totalUsers: 1248,
+    totalEquipment: 555,
+    totalBookings:5558,
+    pendingApprovals: 25,
+    completedRentals: 26,
+    totalRevenue: 906512,
+    monthlyBookings: [
+      { month: "Dec", bookings: 25 },
+      { month: "Jan", bookings: 38 },
+      { month: "Feb", bookings: 46 },
+      { month: "Mar", bookings: 42 },
+      { month: "Apr", bookings: 55 },
+      { month: "May", bookings: 61 },
+      { month: "Jun", bookings: 58 },
+      { month: "Jul", bookings: 72 },
+      { month: "Aug", bookings: 68 },
+      { month: "Sep", bookings: 79 },
+      { month: "Oct", bookings: 85 },
+      { month: "Nov", bookings: 96 },
+    ],
+  };
+
+res.send(data);
+
+});
+
 export default app;
